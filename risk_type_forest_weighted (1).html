@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>숲속 친구들의 투자성향 뽑기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0d1a13;
+    --bg-mid:#17281c;
+    --panel:#20351f;
+    --panel-light:#2c4a2a;
+    --wood:#3a2b1f;
+    --gold:#e8b84b;
+    --gold-bright:#ffd873;
+    --moss:#7cb87c;
+    --parchment:#f2ead9;
+    --parchment-dim:#cfc4a8;
+    --danger:#e0714a;
+    --shadow:rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Gowun Dodum', sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(232,184,75,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(124,184,124,0.10), transparent 45%),
+      linear-gradient(160deg, var(--bg-mid), var(--bg-deep) 70%);
+    color:var(--parchment);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.jua{font-family:'Jua', sans-serif; font-weight:400;}
+  .stage{width:100%; max-width:460px; position:relative;}
+
+  .firefly{
+    position:fixed; width:4px;height:4px; border-radius:50%;
+    background:var(--gold-bright);
+    box-shadow:0 0 8px 3px rgba(255,216,115,0.6);
+    animation:float 6s ease-in-out infinite; opacity:0.7; pointer-events:none;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0) translateX(0); opacity:0.3;}
+    50%{transform:translateY(-30px) translateX(10px); opacity:0.9;}
+  }
+
+  .screen{display:none;}
+  .screen.active{display:block; animation:fadeIn .5s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---------- INTRO ---------- */
+  .intro-card{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:2px solid var(--panel-light);
+    border-radius:24px;
+    padding:36px 28px 30px;
+    text-align:center;
+    box-shadow:0 20px 50px var(--shadow);
+  }
+  .intro-emoji{font-size:64px; display:block; margin-bottom:6px; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.4));}
+  .intro-card h1{font-size:26px; color:var(--gold-bright); margin:4px 0 10px; line-height:1.4;}
+  .intro-card p{color:var(--parchment-dim); font-size:15px; line-height:1.7; margin:0 0 22px;}
+  .mascot-row{display:flex; justify-content:center; gap:10px; margin-bottom:18px; font-size:26px;}
+  .mascot-row span{
+    background:var(--panel-light); border-radius:50%;
+    width:46px;height:46px; display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(232,184,75,0.3);
+  }
+  .badge{
+    display:inline-block; font-size:11.5px; color:var(--parchment-dim);
+    background:var(--bg-mid); border:1px solid var(--panel-light);
+    border-radius:999px; padding:6px 14px; margin-bottom:20px; line-height:1.5;
+  }
+
+  button{font-family:'Jua', sans-serif; cursor:pointer; border:none;}
+  .btn-primary{
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:#3a2408; font-size:18px; padding:14px 32px; border-radius:999px;
+    box-shadow:0 8px 0 #a87c22, 0 12px 20px rgba(0,0,0,0.35);
+    transition:transform .08s ease;
+  }
+  .btn-primary:active{transform:translateY(6px); box-shadow:0 2px 0 #a87c22;}
+
+  /* ---------- QUIZ ---------- */
+  .progress-wrap{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .progress-track{flex:1; height:10px; background:var(--bg-mid); border-radius:6px; overflow:hidden; border:1px solid var(--panel-light);}
+  .progress-fill{height:100%; background:linear-gradient(90deg, var(--moss), var(--gold)); border-radius:6px; transition:width .4s ease; width:0%;}
+  .progress-label{font-size:13px; color:var(--parchment-dim); white-space:nowrap;}
+
+  .weight-tag{
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11.5px; color:var(--gold-bright);
+    background:rgba(232,184,75,0.12); border:1px solid rgba(232,184,75,0.3);
+    border-radius:999px; padding:3px 10px; margin-bottom:10px;
+  }
+
+  .quiz-card{
+    background:var(--panel); border:2px solid var(--panel-light);
+    border-radius:20px; padding:26px 22px; box-shadow:0 16px 40px var(--shadow);
+  }
+  .q-num{color:var(--gold); font-size:13px; letter-spacing:1px; margin-bottom:6px;}
+  .q-text{font-size:19px; line-height:1.5; margin:0 0 16px; color:var(--parchment);}
+
+  .choice{
+    display:flex; align-items:center; gap:12px; width:100%;
+    background:var(--panel-light); color:var(--parchment);
+    border-radius:14px; padding:14px 16px; margin-bottom:10px; font-size:15px;
+    font-family:'Gowun Dodum', sans-serif; text-align:left; border:1.5px solid transparent;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .choice:last-child{margin-bottom:0;}
+  .choice .icon{font-size:22px; flex-shrink:0;}
+  .choice:active{transform:scale(0.97);}
+  .choice.selected{
+    border-color:var(--gold-bright);
+    background:linear-gradient(90deg, rgba(232,184,75,0.18), var(--panel-light));
+  }
+  .interp-box{
+    margin-top:12px; padding:12px 14px; border-radius:12px;
+    background:rgba(232,184,75,0.1); border:1px dashed var(--gold);
+    font-size:13px; line-height:1.6; color:var(--parchment-dim);
+    display:none;
+  }
+  .interp-box.show{display:block; animation:fadeIn .3s ease;}
+  .interp-box b{color:var(--gold-bright);}
+
+  /* ---------- WHEEL ---------- */
+  .chest-wrap{text-align:center;}
+  .chest-wrap h2{color:var(--gold-bright); font-size:22px; margin:0 0 6px;}
+  .chest-wrap p{color:var(--parchment-dim); font-size:14px; margin:0 0 22px;}
+  .wheel-holder{position:relative; width:280px; height:280px; margin:0 auto 26px;}
+  .pointer{position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:34px; z-index:5; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));}
+  .wheel{
+    width:100%; height:100%; border-radius:50%; border:6px solid var(--gold);
+    box-shadow:0 0 0 4px var(--wood), 0 20px 40px var(--shadow), inset 0 0 30px rgba(0,0,0,0.3);
+    position:relative; transition:transform 4.5s cubic-bezier(0.12,0.72,0.15,1);
+    background:conic-gradient(#4a6b3a 0deg 72deg, #3d5c8a 72deg 144deg, #7a5a9e 144deg 216deg, #b0632f 216deg 288deg, #a33b3b 288deg 360deg);
+  }
+  .wheel-label{position:absolute; width:100%; height:100%; top:0; left:0;}
+  .wheel-label span{position:absolute; left:50%; top:50%; font-size:28px; transform-origin:0 0;}
+  .wheel-center{
+    position:absolute; top:50%; left:50%; width:56px; height:56px;
+    background:radial-gradient(circle, var(--gold-bright), var(--gold));
+    border-radius:50%; transform:translate(-50%,-50%);
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+    display:flex; align-items:center; justify-content:center; font-size:22px; z-index:4;
+  }
+  .spin-btn{
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:#3a2408; font-size:17px; padding:13px 30px; border-radius:999px;
+    box-shadow:0 8px 0 #a87c22, 0 12px 20px rgba(0,0,0,0.35);
+  }
+  .spin-btn:disabled{opacity:0.5;}
+  .spin-btn:active:not(:disabled){transform:translateY(6px); box-shadow:0 2px 0 #a87c22;}
+
+  /* ---------- RESULT ---------- */
+  .result-card{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:2px solid var(--gold); border-radius:24px; padding:30px 24px; text-align:center;
+    box-shadow:0 0 40px rgba(232,184,75,0.25), 0 20px 50px var(--shadow);
+    animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn{from{opacity:0; transform:scale(0.7);} to{opacity:1; transform:scale(1);}}
+  .result-emoji{font-size:76px; display:block; margin-bottom:4px;}
+  .result-title{font-size:24px; color:var(--gold-bright); margin:6px 0 4px;}
+  .result-sub{font-size:14px; color:var(--moss); margin:0 0 14px;}
+  .score-meter{margin:0 0 16px;}
+  .score-track{
+    height:14px; background:var(--bg-mid); border-radius:8px; overflow:hidden;
+    border:1px solid var(--panel-light); position:relative;
+  }
+  .score-fill{height:100%; background:linear-gradient(90deg, var(--moss), var(--gold-bright)); border-radius:8px; transition:width 1s ease;}
+  .score-labels{display:flex; justify-content:space-between; font-size:10.5px; color:var(--parchment-dim); margin-top:4px;}
+  .score-num{font-size:12.5px; color:var(--gold-bright); margin-top:6px;}
+  .result-desc{
+    background:var(--bg-mid); border-radius:14px; padding:16px; font-size:14.5px;
+    line-height:1.75; color:var(--parchment); text-align:left; margin-bottom:14px;
+  }
+  .result-tip{
+    background:rgba(232,184,75,0.1); border:1px dashed var(--gold); border-radius:14px;
+    padding:14px 16px; font-size:13.5px; line-height:1.7; color:var(--parchment-dim);
+    text-align:left; margin-bottom:16px;
+  }
+  .result-tip b{color:var(--gold-bright);}
+  .btn-row{display:flex; gap:10px; justify-content:center; margin-top:6px; flex-wrap:wrap;}
+  .btn-ghost{
+    background:transparent; border:1.5px solid var(--panel-light); color:var(--parchment-dim);
+    font-size:14px; padding:11px 20px; border-radius:999px;
+  }
+
+  /* ---------- REPORT ---------- */
+  .report-wrap{margin-top:14px; text-align:left;}
+  .report-list{display:none; margin-top:12px;}
+  .report-list.show{display:block; animation:fadeIn .35s ease;}
+  .report-item{
+    background:var(--bg-mid); border:1px solid var(--panel-light); border-radius:14px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .report-item .cat{font-size:11px; color:var(--gold); letter-spacing:0.5px; margin-bottom:4px;}
+  .report-item .ans{font-size:14px; color:var(--parchment); margin-bottom:6px; display:flex; align-items:center; gap:6px;}
+  .report-item .interp{font-size:12.5px; color:var(--parchment-dim); line-height:1.6;}
+
+  .footer-note{text-align:center; font-size:11px; color:var(--parchment-dim); margin-top:16px; opacity:0.6;}
+
+  /* ---------- NAME INPUT ---------- */
+  .name-input{
+    width:100%; background:var(--bg-mid); border:1.5px solid var(--panel-light);
+    border-radius:12px; padding:12px 14px; color:var(--parchment);
+    font-family:'Gowun Dodum', sans-serif; font-size:14px; margin-bottom:16px;
+    text-align:center;
+  }
+  .name-input::placeholder{color:var(--parchment-dim);}
+  .link-btn{
+    background:none; border:none; color:var(--moss); font-size:13px;
+    text-decoration:underline; font-family:'Gowun Dodum', sans-serif; margin-top:14px;
+  }
+
+  /* ---------- STATS ---------- */
+  .stats-card{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:2px solid var(--panel-light); border-radius:24px; padding:28px 22px;
+    box-shadow:0 20px 50px var(--shadow);
+  }
+  .stats-card h2{color:var(--gold-bright); font-size:21px; margin:0 0 4px; text-align:center;}
+  .stats-sub{text-align:center; font-size:13px; color:var(--parchment-dim); margin:0 0 20px;}
+  .stats-summary{display:flex; gap:10px; margin-bottom:20px;}
+  .stats-box{
+    flex:1; background:var(--bg-mid); border:1px solid var(--panel-light);
+    border-radius:14px; padding:14px 10px; text-align:center;
+  }
+  .stats-box .num{font-size:22px; color:var(--gold-bright); font-family:'Jua',sans-serif;}
+  .stats-box .lbl{font-size:11.5px; color:var(--parchment-dim); margin-top:2px;}
+  .stats-dist{background:var(--bg-mid); border-radius:14px; padding:16px; margin-bottom:16px;}
+  .stats-dist .title{font-size:12.5px; color:var(--parchment-dim); margin-bottom:10px;}
+  .dist-row{display:flex; align-items:center; gap:8px; margin:8px 0; font-size:13px;}
+  .dist-icon{width:24px; text-align:center; font-size:18px;}
+  .dist-name{width:52px; flex-shrink:0; color:var(--parchment-dim); font-size:12px;}
+  .dist-track{flex:1; height:10px; background:var(--panel); border-radius:6px; overflow:hidden;}
+  .dist-fill{height:100%; background:linear-gradient(90deg, var(--moss), var(--gold)); border-radius:6px; transition:width .6s ease;}
+  .dist-count{width:24px; text-align:right; color:var(--parchment-dim); font-size:12px;}
+  .stats-table-wrap{max-height:200px; overflow-y:auto; margin-bottom:16px;}
+  .stats-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .stats-table th{color:var(--gold); text-align:left; padding:6px 8px; border-bottom:1px solid var(--panel-light); font-weight:normal;}
+  .stats-table td{padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--parchment-dim);}
+  .stats-empty{text-align:center; color:var(--parchment-dim); font-size:13px; padding:30px 10px; line-height:1.7;}
+
+  /* ---------- CONFIRM MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    display:none; align-items:center; justify-content:center;
+    z-index:50; padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:2px solid var(--gold); border-radius:20px;
+    padding:26px 22px; max-width:320px; width:100%;
+    text-align:center; box-shadow:0 20px 50px var(--shadow);
+    animation:popIn .3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-box p{font-size:14.5px; line-height:1.7; color:var(--parchment); margin:0 0 20px; white-space:pre-line;}
+  .modal-btn-row{display:flex; gap:10px;}
+  .modal-btn-row button{flex:1; padding:12px 10px; border-radius:999px; font-size:14px;}
+  .modal-cancel{background:transparent; border:1.5px solid var(--panel-light); color:var(--parchment-dim);}
+  .modal-confirm{background:linear-gradient(180deg, var(--danger), #b5522f); color:#fff;}
+
+  @media (max-width:380px){
+    .wheel-holder{width:230px; height:230px;}
+    .wheel-label span{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- INTRO -->
+  <section class="screen active" id="screen-intro">
+    <div class="intro-card">
+      <span class="intro-emoji">🌲🎁</span>
+      <h1>숲속 친구들의<br>투자성향 뽑기</h1>
+      <p>8가지 질문에 답하면<br>나와 닮은 숲속 동물 친구를 뽑아줄게요!</p>
+      <div class="mascot-row">
+        <span>🐢</span><span>🐿️</span><span>🦉</span><span>🦊</span><span>🐯</span>
+      </div>
+      <div class="badge">⭐ 중요한 질문은 점수에 더 크게 반영돼요</div>
+      <input type="text" class="name-input" id="nameInput" placeholder="이름 또는 번호 (선택, 학급 통계용)" maxlength="12">
+      <button class="btn-primary" onclick="startQuiz()">시작하기</button>
+      <br>
+      <button class="link-btn" onclick="renderStats(); showScreen('screen-stats')">📊 우리 반 통계 보기</button>
+    </div>
+    <p class="footer-note">정답은 없어요. 솔직하게 골라보세요!</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">1 / 8</div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-num" id="qNum">QUESTION 1</div>
+      <div class="weight-tag" id="qWeight">⭐ 중요도</div>
+      <p class="q-text" id="qText">질문이 여기에 표시됩니다</p>
+      <div id="choiceList"></div>
+      <div class="interp-box" id="interpBox"></div>
+    </div>
+  </section>
+
+  <!-- WHEEL -->
+  <section class="screen" id="screen-wheel">
+    <div class="chest-wrap">
+      <h2>🎁 보물상자 뽑기 시간!</h2>
+      <p>버튼을 눌러 룰렛을 돌려보세요</p>
+      <div class="wheel-holder">
+        <div class="pointer">🔻</div>
+        <div class="wheel" id="wheel"><div class="wheel-label" id="wheelLabel"></div></div>
+        <div class="wheel-center">✨</div>
+      </div>
+      <button class="spin-btn" id="spinBtn" onclick="spinWheel()">룰렛 돌리기!</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="screen-result">
+    <div class="result-card">
+      <span class="result-emoji" id="resEmoji">🐢</span>
+      <h2 class="result-title" id="resTitle">거북이형</h2>
+      <p class="result-sub" id="resSub">안전제일 저축가</p>
+
+      <div class="score-meter">
+        <div class="score-track"><div class="score-fill" id="scoreFill" style="width:0%"></div></div>
+        <div class="score-labels"><span>안정형</span><span>위험중립형</span><span>공격투자형</span></div>
+        <div class="score-num" id="scoreNum">위험지수 0 / 100</div>
+      </div>
+
+      <div class="result-desc" id="resDesc"></div>
+      <div class="result-tip" id="resTip"></div>
+
+      <div class="report-wrap">
+        <button class="btn-ghost" onclick="toggleReport()" id="reportToggleBtn" style="width:100%;">📋 내 답변 해석 리포트 보기</button>
+        <div class="report-list" id="reportList"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="location.reload()">다시 하기</button>
+        <button class="btn-ghost" onclick="renderStats(); showScreen('screen-stats')">📊 우리 반 통계</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="screen" id="screen-stats">
+    <div class="stats-card">
+      <h2>🏫 우리 반 위험성향 통계</h2>
+      <p class="stats-sub">이 기기에 기록된 모든 친구들의 결과예요</p>
+      <div id="statsBody"></div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="showScreen('screen-intro')">🔙 처음으로</button>
+        <button class="btn-ghost" onclick="confirmResetLog()">🗑️ 통계 초기화 (선생님)</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-box">
+    <p>우리 반 통계 기록을 모두 지울까요?<br>(새 학급/새 차시를 시작할 때만 눌러주세요)</p>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeResetModal()">취소</button>
+      <button class="modal-confirm" onclick="doResetLog()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- Sound (Web Audio, no external files) ---------------- */
+let audioCtx;
+function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(freq, dur, type='sine', vol=0.18, delay=0){
+  const c = ctx(); const t0 = c.currentTime + delay;
+  const osc = c.createOscillator(); const gain = c.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(vol, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(c.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.02);
+}
+function sfxClick(){ beep(520,0.09,'triangle',0.15); }
+function sfxAdvance(){ beep(660,0.08,'sine',0.14); beep(880,0.09,'sine',0.12,0.06); }
+function sfxSpinTick(){ beep(300,0.03,'square',0.06); }
+function sfxWin(){ [523,659,784,1046].forEach((f,i)=>beep(f,0.22,'triangle',0.16,i*0.11)); }
+
+/* ---------------- Types (5 official-style categories) ---------------- */
+const TYPES = [
+  {key:'turtle', emoji:'🐢', name:'거북이형', sub:'안전형 (안정형)',
+    desc:'확실한 것을 가장 좋아해요. 위험을 감수하기보다 조금씩 착실하게 모으는 걸 편안하게 느끼는 성향이에요. 예금이나 적금처럼 원금이 안전하게 지켜지는 방법을 선호해요.',
+    tip:'<b>TIP.</b> 안전함은 큰 장점이지만, 가끔은 아주 작은 도전을 해보는 것도 성장의 기회가 될 수 있어요.'},
+  {key:'squirrel', emoji:'🐿️', name:'다람쥐형', sub:'안전추구형',
+    desc:'대부분은 안전하게, 아주 가끔 조심스럽게 도전해보는 성향이에요. 도토리를 여러 곳에 나눠 숨기는 다람쥐처럼, 돈을 모을 때도 신중하게 계획을 세우는 편이에요.',
+    tip:'<b>TIP.</b> 신중함 덕분에 실수는 적지만, 좋은 기회다 싶을 땐 조금 더 과감해져도 좋아요.'},
+  {key:'owl', emoji:'🦉', name:'부엉이형', sub:'위험중립형',
+    desc:'안전과 도전 사이에서 상황을 잘 살펴보고 판단하는 성향이에요. 한 가지에 몰빵하기보다 여러 가지를 골고루 나눠서 생각하는, 이른바 분산투자와 닮은 스타일이에요.',
+    tip:'<b>TIP.</b> 지금처럼 상황을 잘 살피는 습관을 유지하면서, 나만의 기준을 조금씩 더 뚜렷하게 만들어가 보세요.'},
+  {key:'fox', emoji:'🦊', name:'여우형', sub:'적극투자형',
+    desc:'기회다 싶으면 놓치지 않고 도전하는 성향이에요. 위험이 조금 있어도 그만큼 얻을 수 있는 게 크다면 기꺼이 시도해요. 영리하게 상황을 판단하며 움직이는 편이에요.',
+    tip:'<b>TIP.</b> 도전을 즐기는 건 큰 힘이지만, 도전하기 전 잠깐 멈춰서 위험도 함께 따져보는 습관을 들여보세요.'},
+  {key:'tiger', emoji:'🐯', name:'호랑이형', sub:'공격투자형',
+    desc:'큰 목표를 위해서라면 위험도 기꺼이 감수하는 대담한 성향이에요. 안전한 길보다 큰 가능성이 있는 길에 끌리고, 도전 자체를 즐기는 편이에요.',
+    tip:'<b>TIP.</b> 용기는 멋진 무기예요! 다만 모든 걸 한 곳에 걸기보다, 일부는 안전하게 지켜두는 습관도 함께 가져보세요.'}
+];
+
+/* ---------------- Questions with weights + interpretations ----------------
+   weight: 표준투자권유준칙의 '손실 감내 수준' 항목처럼 핵심 문항일수록 가중치를 높게 부여
+   c[i].v: 1(거북이)~5(호랑이) 척도 값 / c[i].interp: 해당 답변에 대한 해석
+------------------------------------------------------------------------ */
+const QUESTIONS = [
+  { q:'용돈을 받았을 때 나는?', cat:'자산 배분 습관', weight:1,
+    c:[
+      {t:'다 저금통에 넣고 안 쓴다', v:1, interp:'손실 위험을 아예 만들지 않으려는 성향이에요.'},
+      {t:'대부분 저금하고 아주 조금만 쓴다', v:2, interp:'안전을 우선하면서도 약간의 소비 여유를 두는 성향이에요.'},
+      {t:'반은 저금, 반은 쓰고 싶은 곳에 쓴다', v:3, interp:'저축과 소비를 균형 있게 나누는 성향이에요.'},
+      {t:'대부분 쓰고 남는 걸 저금한다', v:4, interp:'당장의 만족을 더 중요하게 여기는 성향이에요.'},
+      {t:'갖고 싶었던 걸 바로 다 사버린다', v:5, interp:'저축보다 즉각적인 소비를 선택하는 성향이에요.'}
+    ]},
+  { q:'친구가 게임에서 두 가지 상품 중 고르라고 한다면?', cat:'손실 감내 수준', weight:3,
+    c:[
+      {t:'무조건 확실하게 받는 작은 상품', v:1, interp:'손실 가능성을 전혀 감수하지 않으려는, 손실 회피가 강한 성향이에요.'},
+      {t:'이길 확률이 아주 높은 쪽', v:2, interp:'약간의 불확실성은 받아들이지만 안전을 우선하는 성향이에요.'},
+      {t:'반반 확률이어도 상품이 좋으면 도전', v:3, interp:'위험과 보상을 저울질해서 판단하는 균형적 성향이에요.'},
+      {t:'확률이 낮아도 상품이 크면 도전', v:4, interp:'큰 보상을 위해 상당한 불확실성도 감수하는 성향이에요.'},
+      {t:'무조건 제일 크고 위험한 상품에 도전', v:5, interp:'손실 가능성보다 보상 가능성에 더 끌리는, 위험 감내 수준이 매우 높은 성향이에요.'}
+    ]},
+  { q:'새로 나온 장난감이나 게임을 살 때 나는?', cat:'정보 확인 성향', weight:1,
+    c:[
+      {t:'다른 사람들이 써보고 좋다고 할 때까지 기다린다', v:1, interp:'충분한 정보가 쌓일 때까지 기다리는 신중한 성향이에요.'},
+      {t:'후기를 여러 개 찾아본 뒤에 결정한다', v:2, interp:'결정 전에 정보를 확인하려는 성향이에요.'},
+      {t:'재미있어 보이면 크게 고민 안 하고 산다', v:3, interp:'정보 확인보다 직관을 따르는 성향이에요.'},
+      {t:'광고만 봐도 바로 사고 싶어진다', v:4, interp:'정보 검토 없이 감정적으로 반응하는 성향이에요.'},
+      {t:'나오자마자 제일 먼저 사러 간다', v:5, interp:'불확실성을 신경 쓰지 않고 가장 먼저 뛰어드는 성향이에요.'}
+    ]},
+  { q:'시험 문제를 풀 때 나는?', cat:'위험 감수 태도', weight:2,
+    c:[
+      {t:'확실히 아는 문제만 풀고 어려운 건 넘어간다', v:1, interp:'확실한 것에만 집중하고 위험을 피하는 성향이에요.'},
+      {t:'대부분 차근차근 확인하며 푼다', v:2, interp:'안전하게 접근하되 노력은 기울이는 성향이에요.'},
+      {t:'반은 확인하고, 반은 과감하게 도전한다', v:3, interp:'안정과 도전을 함께 시도하는 성향이에요.'},
+      {t:'어려운 문제도 일단 도전해서 풀어본다', v:4, interp:'실패 가능성이 있어도 도전을 선택하는 성향이에요.'},
+      {t:'모르는 것도 다 찍어서 만점에 도전한다', v:5, interp:'결과가 불확실해도 최대치를 노리는 성향이에요.'}
+    ]},
+  { q:'갖고 싶은 게 있는데 돈이 모자랄 때?', cat:'목표 달성 방식', weight:1,
+    c:[
+      {t:'돈을 다 모을 때까지 기다린다', v:1, interp:'시간이 걸려도 안전한 방법을 선택하는 성향이에요.'},
+      {t:'용돈을 아껴서 조금 더 빨리 모은다', v:2, interp:'절제를 통해 목표를 앞당기려는 성향이에요.'},
+      {t:'집안일을 도와 용돈을 더 받는다', v:3, interp:'노력을 통해 새로운 방법을 찾는 성향이에요.'},
+      {t:'친구에게 잠깐 빌려서 산다', v:4, interp:'미래의 부담을 감수하고 지금 얻으려는 성향이에요. (빚과 비슷한 개념)'},
+      {t:'어떻게든 오늘 당장 구할 방법을 찾는다', v:5, interp:'결과를 따지지 않고 즉시 해결하려는 충동적 성향이에요.'}
+    ]},
+  { q:'좋아하는 캐릭터 뽑기(가챠)를 할 때?', cat:'반복 도전 성향', weight:3,
+    c:[
+      {t:'위험하다고 생각해서 절대 안 한다', v:1, interp:'불확실한 반복 보상에 전혀 끌리지 않는 성향이에요.'},
+      {t:'딱 한 번만 해보고 만다', v:2, interp:'호기심은 있지만 반복 위험은 피하는 성향이에요.'},
+      {t:'원하는 게 나올 때까지 몇 번 해본다', v:3, interp:'원하는 결과를 위해 어느 정도 반복 위험을 감수하는 성향이에요.'},
+      {t:'기분 좋을 때 자주 하는 편이다', v:4, interp:'불확실한 보상을 즐기며 반복하는 성향이에요.'},
+      {t:'원하는 게 나올 때까지 계속 도전한다', v:5, interp:'손실이 누적돼도 계속 도전하는, 위험 감내 수준이 매우 높은 성향이에요.'}
+    ]},
+  { q:'친구와 함께하는 팀 게임에서 나는?', cat:'전략적 위험 선택', weight:2,
+    c:[
+      {t:'가장 안전한 전략만 쓴다', v:1, interp:'실패 확률을 최소화하는 것을 최우선으로 하는 성향이에요.'},
+      {t:'대부분 안전하게, 가끔만 도전한다', v:2, interp:'안정적인 전략을 기본으로 삼는 성향이에요.'},
+      {t:'상황을 보고 그때그때 판단한다', v:3, interp:'상황에 따라 위험 수준을 조절하는 유연한 성향이에요.'},
+      {t:'이기기 위해 위험한 전략도 써본다', v:4, interp:'승리를 위해 위험을 전략적으로 활용하는 성향이에요.'},
+      {t:'항상 제일 화끈하고 위험한 전략을 쓴다', v:5, interp:'위험도가 가장 높은 선택을 기본값으로 삼는 성향이에요.'}
+    ]},
+  { q:'미래에 하고 싶은 일을 생각하면?', cat:'장기 목표 지향', weight:1,
+    c:[
+      {t:'안정적이고 변화가 적은 일', v:1, interp:'장기적으로도 안정성을 최우선하는 성향이에요.'},
+      {t:'안정적이면서도 조금씩 성장하는 일', v:2, interp:'안정 속에서 성장을 함께 추구하는 성향이에요.'},
+      {t:'적당히 도전적이고 재미있는 일', v:3, interp:'적당한 위험과 재미의 균형을 추구하는 성향이에요.'},
+      {t:'위험은 있지만 크게 성공할 수 있는 일', v:4, interp:'장기적으로 큰 보상을 위해 위험을 감수하는 성향이에요.'},
+      {t:'아주 위험해도 큰 꿈을 이룰 수 있는 일 (창업, 운동선수, 유튜버 등)', v:5, interp:'장기적 관점에서도 가장 큰 위험을 선택하는 성향이에요.'}
+    ]}
+];
+
+const TOTAL_WEIGHT = QUESTIONS.reduce((s,q)=>s+q.weight,0); // 14
+const MIN_SCORE = TOTAL_WEIGHT * 1;
+const MAX_SCORE = TOTAL_WEIGHT * 5;
+
+/* 표준투자권유준칙과 동일한 경계값(100점 환산 기준) 재사용 */
+function typeIndexFromPercent(pct){
+  if(pct <= 43) return 0;       // 안정형 - 거북이
+  if(pct <= 55) return 1;       // 안정추구형 - 다람쥐
+  if(pct <= 68) return 2;       // 위험중립형 - 부엉이
+  if(pct <= 81) return 3;       // 적극투자형 - 여우
+  return 4;                     // 공격투자형 - 호랑이
+}
+
+/* ---------------- State ---------------- */
+let current = 0;
+let weightedSum = 0;
+const answerLog = []; // {qIndex, choiceIndex, catText, chosenText, interp}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let studentName = '';
+function startQuiz(){
+  sfxAdvance(); ctx();
+  studentName = (document.getElementById('nameInput').value || '').trim();
+  current = 0; weightedSum = 0; answerLog.length = 0;
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+function weightStars(w){ return '⭐'.repeat(w) + ' 중요도'; }
+
+function renderQuestion(){
+  const item = QUESTIONS[current];
+  document.getElementById('qNum').textContent = 'QUESTION ' + (current+1);
+  document.getElementById('qWeight').textContent = weightStars(item.weight);
+  document.getElementById('qText').textContent = item.q;
+  document.getElementById('progressLabel').textContent = (current+1) + ' / ' + QUESTIONS.length;
+  document.getElementById('progressFill').style.width = ((current)/QUESTIONS.length*100) + '%';
+  document.getElementById('interpBox').classList.remove('show');
+  document.getElementById('interpBox').innerHTML = '';
+
+  const list = document.getElementById('choiceList');
+  list.innerHTML = '';
+  item.c.forEach((choice, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="icon">${TYPES[idx].emoji}</span><span>${choice.t}</span>`;
+    btn.onclick = ()=>selectChoice(idx, btn);
+    list.appendChild(btn);
+  });
+}
+
+function selectChoice(choiceIdx, btnEl){
+  sfxClick();
+  document.querySelectorAll('.choice').forEach(b=>b.disabled=true);
+  btnEl.classList.add('selected');
+
+  const item = QUESTIONS[current];
+  const choice = item.c[choiceIdx];
+  weightedSum += choice.v * item.weight;
+  answerLog.push({cat:item.cat, text:choice.t, interp:choice.interp, emoji:TYPES[choiceIdx].emoji});
+
+  const ib = document.getElementById('interpBox');
+  ib.innerHTML = `<b>이 답변은?</b> ${choice.interp}`;
+  ib.classList.add('show');
+
+  setTimeout(()=>{
+    current++;
+    if(current < QUESTIONS.length){
+      renderQuestion();
+    }else{
+      document.getElementById('progressFill').style.width = '100%';
+      sfxAdvance();
+      setTimeout(()=>{ setupWheel(); showScreen('screen-wheel'); }, 500);
+    }
+  }, 900);
+}
+
+/* ---------------- Wheel ---------------- */
+let winningIndex = 0;
+let finalPct = 0;
+
+function setupWheel(){
+  finalPct = Math.round((weightedSum - MIN_SCORE) / (MAX_SCORE - MIN_SCORE) * 100);
+  winningIndex = typeIndexFromPercent(finalPct);
+
+  const wheelLabel = document.getElementById('wheelLabel');
+  wheelLabel.innerHTML = '';
+  const radius = 95;
+  TYPES.forEach((t, i)=>{
+    const midAngleDeg = i*72 + 36;
+    const rad = (midAngleDeg - 90) * Math.PI/180;
+    const x = 140 + radius*Math.cos(rad);
+    const y = 140 + radius*Math.sin(rad);
+    const span = document.createElement('span');
+    span.textContent = t.emoji;
+    span.style.left = x + 'px'; span.style.top = y + 'px';
+    span.style.transform = 'translate(-50%,-50%)';
+    wheelLabel.appendChild(span);
+  });
+
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('spinBtn').textContent = '룰렛 돌리기!';
+  const wheel = document.getElementById('wheel');
+  wheel.style.transition = 'none';
+  wheel.style.transform = 'rotate(0deg)';
+  void wheel.offsetWidth;
+  wheel.style.transition = '';
+}
+
+let spinning = false;
+function spinWheel(){
+  if(spinning) return;
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('spinBtn').textContent = '두구두구...';
+
+  let ticks = 0;
+  const tickInterval = setInterval(()=>{
+    sfxSpinTick(); ticks++;
+    if(ticks>28) clearInterval(tickInterval);
+  }, 140);
+
+  const segCenter = winningIndex*72 + 36;
+  const fullSpins = 5 * 360;
+  const targetRotation = fullSpins + (360 - segCenter) + (Math.random()*20-10);
+  const wheel = document.getElementById('wheel');
+  wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+  setTimeout(()=>{
+    clearInterval(tickInterval);
+    sfxWin();
+    showResult(winningIndex, finalPct);
+    spinning = false;
+  }, 4600);
+}
+
+/* ---------------- Result ---------------- */
+function showResult(idx, pct){
+  const t = TYPES[idx];
+  document.getElementById('resEmoji').textContent = t.emoji;
+  document.getElementById('resTitle').textContent = t.name;
+  document.getElementById('resSub').textContent = t.sub;
+  document.getElementById('resDesc').textContent = t.desc;
+  document.getElementById('resTip').innerHTML = t.tip;
+  document.getElementById('scoreNum').textContent = `위험지수 ${pct} / 100`;
+  setTimeout(()=>{ document.getElementById('scoreFill').style.width = pct + '%'; }, 100);
+
+  const reportList = document.getElementById('reportList');
+  reportList.innerHTML = '';
+  answerLog.forEach((a, i)=>{
+    const div = document.createElement('div');
+    div.className = 'report-item';
+    div.innerHTML = `
+      <div class="cat">Q${i+1} · ${a.cat}</div>
+      <div class="ans"><span>${a.emoji}</span><span>${a.text}</span></div>
+      <div class="interp">${a.interp}</div>
+    `;
+    reportList.appendChild(div);
+  });
+
+  try{
+    localStorage.setItem('riskTypeResult', JSON.stringify({type:t.key, pct, answers:answerLog, date:new Date().toISOString()}));
+  }catch(e){}
+
+  saveClassEntry({
+    name: studentName || '이름 없음',
+    typeKey: t.key,
+    typeName: t.name,
+    emoji: t.emoji,
+    pct: pct,
+    date: new Date().toISOString()
+  });
+
+  showScreen('screen-result');
+}
+
+const CLASS_LOG_KEY = 'foristRiskClassLog';
+
+function loadClassLog(){
+  try{
+    const raw = localStorage.getItem(CLASS_LOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function saveClassEntry(entry){
+  try{
+    const log = loadClassLog();
+    log.push(entry);
+    localStorage.setItem(CLASS_LOG_KEY, JSON.stringify(log));
+  }catch(e){}
+}
+
+function confirmResetLog(){
+  document.getElementById('resetModal').classList.add('show');
+}
+
+function closeResetModal(){
+  document.getElementById('resetModal').classList.remove('show');
+}
+
+function doResetLog(){
+  try{ localStorage.removeItem(CLASS_LOG_KEY); }catch(e){}
+  closeResetModal();
+  renderStats();
+}
+
+function renderStats(){
+  const log = loadClassLog();
+  const body = document.getElementById('statsBody');
+
+  if(log.length === 0){
+    body.innerHTML = '<div class="stats-empty">아직 기록된 결과가 없어요.<br>친구들이 게임을 마치면<br>여기에 통계가 쌓여요!</div>';
+    return;
+  }
+
+  const count = log.length;
+  const avgPct = Math.round(log.reduce((s,e)=>s+e.pct,0) / count);
+
+  const distCounts = {};
+  TYPES.forEach(t=>distCounts[t.key]=0);
+  log.forEach(e=>{ if(distCounts[e.typeKey]!==undefined) distCounts[e.typeKey]++; });
+  const maxDist = Math.max(...Object.values(distCounts), 1);
+
+  let html = '';
+  html += `<div class="stats-summary">
+    <div class="stats-box"><div class="num">${count}</div><div class="lbl">참여 인원</div></div>
+    <div class="stats-box"><div class="num">${avgPct}</div><div class="lbl">평균 위험지수</div></div>
+  </div>`;
+
+  html += '<div class="stats-dist"><div class="title">유형별 분포</div>';
+  TYPES.forEach(t=>{
+    const c = distCounts[t.key];
+    html += `<div class="dist-row">
+      <div class="dist-icon">${t.emoji}</div>
+      <div class="dist-name">${t.name}</div>
+      <div class="dist-track"><div class="dist-fill" style="width:${(c/maxDist*100)}%"></div></div>
+      <div class="dist-count">${c}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += '<div class="stats-table-wrap"><table class="stats-table"><thead><tr><th>이름</th><th>유형</th><th>지수</th></tr></thead><tbody>';
+  log.slice().reverse().forEach(e=>{
+    html += `<tr><td>${escapeHtml(e.name)}</td><td>${e.emoji} ${e.typeName}</td><td>${e.pct}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  body.innerHTML = html;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function toggleReport(){
+  const list = document.getElementById('reportList');
+  const btn = document.getElementById('reportToggleBtn');
+  const isShown = list.classList.toggle('show');
+  btn.textContent = isShown ? '📋 답변 해석 리포트 닫기' : '📋 내 답변 해석 리포트 보기';
+}
+
+/* ---------------- Fireflies ---------------- */
+(function spawnFireflies(){
+  for(let i=0;i<14;i++){
+    const f = document.createElement('div');
+    f.className='firefly';
+    f.style.left = Math.random()*100+'vw';
+    f.style.top = Math.random()*100+'vh';
+    f.style.animationDelay = (Math.random()*6)+'s';
+    f.style.animationDuration = (5+Math.random()*4)+'s';
+    document.body.appendChild(f);
+  }
+})();
+</script>
+</body>
+</html>
